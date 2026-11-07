@@ -221,13 +221,10 @@ function renderShell() {
   const me = state.me;
   const links = [
     ['/', 'Home', (p) => p === '/'],
-    ['/forum', 'Forum', (p) => p === '/forum' || p.startsWith('/c/') || p.startsWith('/t/')],
     ['/servers', 'Servers', (p) => p === '/servers'],
-    ['/repos', 'Repos', (p) => p === '/repos'],
-    ['/models', 'Models', (p) => p === '/models'],
+    ['/forum', 'Forum', (p) => p === '/forum' || p.startsWith('/c/') || p.startsWith('/t/')],
     ['/chat', 'Chat', (p) => p === '/chat'],
     ['/members', 'Members', (p) => p === '/members' || p.startsWith('/u/')],
-    ['/rules', 'Rules', (p) => p === '/rules'],
   ];
   const auth = me
     ? `${userLink(me.username, me.role)}<button type="button" class="btn btn-ghost" data-act="logout">Log out</button>`
@@ -241,10 +238,14 @@ function renderShell() {
     <button type="button" class="btn btn-ghost nav-toggle" data-act="nav">Menu</button>
     <nav id="nav">
       ${links.map(([href, label, test]) => `<a class="${navActive(test)}" href="${href}">${label}</a>`).join('')}
-      <details class="menu"><summary>Reports</summary><div class="menu-pop">
+      <details class="menu"><summary>Requests</summary><div class="menu-pop">
         <a href="/report/player">Report a player</a>
         <a href="/report/admin">Report an admin</a>
         <a href="/apply">Apply for admin</a>
+      </div></details>
+      <details class="menu"><summary>More</summary><div class="menu-pop">
+        <a href="/rules">Rules</a>
+        <a href="/repos">Repos</a>
       </div></details>
       ${queue}${manage}
     </nav>
@@ -293,42 +294,64 @@ function portrait(model) {
 
 async function renderHome() {
   const data = await api('/api/home');
+  const server = (data.servers || [])[0];
   const latest = data.latest.length ? data.latest.map((thread) => `
-    <div class="thread-row"><div><a class="title" href="/t/${thread.id}">${esc(thread.title)}</a><div class="row-meta"><span class="tag">${esc(thread.category)}</span>${userLink(thread.username, thread.role)}</div></div><span class="muted">${ago(thread.updated_at)}</span></div>
+    <a class="thread-row" href="/t/${thread.id}"><div><strong class="title">${esc(thread.title)}</strong><div class="row-meta"><span class="tag">${esc(thread.category)}</span>${userLink(thread.username, thread.role)}</div></div><span class="muted">${ago(thread.updated_at)}</span></a>
   `).join('') : '<div class="empty">The board is quiet.</div>';
-  return `<div data-page="home" data-title="Trapstar">
-    <section class="hero"><img src="/assets/banner.jpg" alt="Trapstar banner, CS 1.6 community"></section>
-    <div class="wrap">
-      <div class="hero-actions">
-        <a class="btn" href="${state.meta.discord}" target="_blank" rel="noopener">Join Discord</a>
-        <a class="btn btn-ghost" href="/servers">Servers</a>
-        <a class="btn btn-ghost" href="/forum">Forum</a>
+  const live = server ? `
+    <article class="live-card">
+      <div class="server-top"><span class="dot ${server.online ? '' : 'off'}"></span><span>${server.online ? 'Live' : 'Offline'}</span><span class="ping">${esc(server.name || 'Trapstar')}</span></div>
+      <p class="map">${esc(server.map || 'waiting for the server')}<span>${server.online ? `${server.players}/${server.maxPlayers} players` : 'No answer from the query port yet.'}</span></p>
+      <p class="live-ip">${esc(server.address)}</p>
+      <div class="inline-actions">
+        <button type="button" class="btn btn-ghost" data-act="copy" data-copy="connect ${esc(server.address)}">Copy IP</button>
+        <a class="btn" href="/servers">Connect</a>
       </div>
-      <div class="grid-stats">
-        <div class="stat"><b>${data.stats.members}</b><span>Members</span></div>
-        <div class="stat"><b>${data.stats.threads}</b><span>Threads</span></div>
-        <div class="stat"><b>${data.stats.posts}</b><span>Posts</span></div>
-        <div class="stat"><b>${data.stats.servers}</b><span>Servers</span></div>
-        <div class="stat"><b>${data.stats.repos}</b><span>Repos</span></div>
+    </article>` : `
+    <article class="live-card">
+      <div class="server-top"><span class="dot off"></span><span>Servers</span></div>
+      <h3>No public server yet</h3>
+      <p class="lede">When the owner adds an ip:port, the name, map, and players show up here.</p>
+      <a class="btn" href="/servers">Servers</a>
+    </article>`;
+  return `<div data-page="home" data-title="Trapstar" class="land">
+    <section class="land-hero">
+      <img src="/assets/banner.jpg" alt="">
+      <div class="wrap land-copy">
+        <p class="land-kicker">[ No cheats // No excuses // Just the server ]</p>
+        <h1><span>TRAPSTAR</span><span>COMMUNITY</span></h1>
+        <p class="land-lead">A Counter-Strike 1.6 community. Join the server, meet the crew, and play.</p>
+        <a class="play" href="/servers">Play now</a>
       </div>
-      <div class="section-head"><h2>Live servers</h2><a href="/servers">All servers</a></div>
-      <div id="server-grid" class="grid-servers">${serverGrid(data.servers, false)}</div>
-      <div class="section-head"><h2>GitHub</h2><a href="/repos">All repos</a></div>
-      <div class="grid-repos">${repoGrid(data.repos || [], false)}</div>
-      <div class="grid-2 mt-lg">
-        <section class="panel"><div class="section-head"><h2>Latest</h2><a href="/forum">Boards</a></div>${latest}</section>
-        <section>
-          <div class="panel"><p class="kicker">Discord</p><h2>Trapstar Community</h2><p class="lede">Mixes, server talk, and the people you just played with.</p><a class="btn" href="${state.meta.discord}" target="_blank" rel="noopener">discord.gg/trapstarcommunity</a></div>
-          <div class="panel stack"><p class="kicker">Roles</p>
-            <p>${roleBadge('member')} Every new account.</p>
-            <p>${roleBadge('staff')} Added by the owner. Reads reports and applications.</p>
-            <p>${roleBadge('owner')} Manages staff, servers, and GitHub repos.</p>
-          </div>
-        </section>
+    </section>
+    <section class="wrap land-about">
+      <div><p class="muted">Established</p><p class="land-year">2026</p></div>
+      <div>
+        <h2>More than a server list</h2>
+        <p class="lede">Trapstar is the board, the chat, and the CS 1.6 servers for this crew. Sign up, talk, and hop in when the server is live.</p>
       </div>
-      <div class="section-head"><h2>CS 1.6 models</h2><a href="/models">Full roster</a></div>
-      <div class="grid-models">${MODELS.slice(0, 4).map((model) => `<a class="hud model-card" href="/models"><div class="tag ${model.side === 'T' ? 'side-t' : 'side-ct'}">${model.side}</div>${portrait(model)}<strong>${esc(model.name)}</strong><div class="muted">${esc(model.pack)}</div></a>`).join('')}</div>
-    </div>
+    </section>
+    <section class="wrap land-stats">
+      <div><b>${data.stats.members}</b><span>Members</span></div>
+      <div><b>${data.stats.threads}</b><span>Threads</span></div>
+      <div><b>${data.stats.servers}</b><span>Servers</span></div>
+    </section>
+    <section class="wrap land-grid">
+      <div>
+        <div class="section-head"><h2>Server</h2><a href="/servers">All servers</a></div>
+        ${live}
+      </div>
+      <div>
+        <div class="section-head"><h2>Latest</h2><a href="/forum">Forum</a></div>
+        ${latest}
+        <div class="panel mt">
+          <p class="kicker">Discord</p>
+          <h2>Trapstar Community</h2>
+          <p class="lede">Mixes, server talk, and the people you just played with.</p>
+          <a class="btn" href="${state.meta.discord}" target="_blank" rel="noopener">Join Discord</a>
+        </div>
+      </div>
+    </section>
   </div>`;
 }
 
