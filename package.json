@@ -1,0 +1,12 @@
+{
+  "name": "trapstar-forum",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Trapstar CS 1.6 community forum",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
