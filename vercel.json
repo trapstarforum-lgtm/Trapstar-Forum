@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/((?!api(?:/|$)|assets(?:/|$)|css(?:/|$)|js(?:/|$)|favicon\\.ico$|index\\.html$).+)", "destination": "/index.html" }
   ],
   "env": {
     "PUBLIC_URL": "https://trapstar-forum.lol"

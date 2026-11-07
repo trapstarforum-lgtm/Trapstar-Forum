@@ -1322,7 +1322,11 @@ async function statusLoop() {
   }
 }
 
-module.exports = { handle };
+async function entry(req, res) {
+  return handle(req, res);
+}
+entry.handle = handle;
+module.exports = entry;
 
 if (require.main === module) {
   const server = http.createServer(handle);
