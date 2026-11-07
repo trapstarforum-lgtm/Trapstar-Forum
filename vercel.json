@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "public": true,
   "rewrites": [
     { "source": "/((?!api/|assets/|css/|js/|favicon.ico).*)", "destination": "/index.html" }
   ],
