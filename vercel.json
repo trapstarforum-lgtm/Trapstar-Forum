@@ -1,12 +1,11 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/((?!api/|assets/|css/|js/|favicon.ico).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 10,
-      "includeFiles": "{lib/**,server.js,public/assets/logo.png}"
+      "maxDuration": 10
     }
   },
   "env": {

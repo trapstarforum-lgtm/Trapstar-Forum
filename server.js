@@ -1322,12 +1322,6 @@ async function statusLoop() {
   }
 }
 
-setInterval(() => {
-  const now = Date.now();
-  db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(now);
-  db.prepare('DELETE FROM pending_signups WHERE expires_at < ?').run(now);
-}, 60 * 60 * 1000).unref();
-
 module.exports = { handle };
 
 if (require.main === module) {
@@ -1341,4 +1335,9 @@ if (require.main === module) {
       : 'Mail: add SMTP settings before signup codes can send');
   });
   statusLoop();
+  setInterval(() => {
+    const now = Date.now();
+    db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(now);
+    db.prepare('DELETE FROM pending_signups WHERE expires_at < ?').run(now);
+  }, 60 * 60 * 1000).unref();
 }
